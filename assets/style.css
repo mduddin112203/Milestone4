@@ -1,0 +1,154 @@
+/* Import Google Fonts for modern, sleek typography */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Roboto+Mono:wght@300&display=swap');
+
+/* Global Styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 20px; /* Adds space on all sides */
+    background: linear-gradient(135deg, #eef2f3, #ffffff);
+    color: #333;
+    box-sizing: border-box;
+    overflow-y: auto; /* Ensures vertical scrolling is allowed */
+}
+
+html {
+    margin: 0 auto;
+    max-width: 1200px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    overflow-y: auto; /* Ensure scrolling is allowed here as well */
+    overflow-x: hidden; /* Prevent horizontal scrolling for better UX */
+    background-color: #ffffff;
+}
+
+/* Header Styling */
+h1 {
+    font-size: 2.8em;
+    color: #0056b3;
+    text-align: center;
+    margin: 30px 0 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    background: linear-gradient(to right, #0056b3, #007bff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+h3 {
+    font-size: 1.8em;
+    color: #555;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+/* Upload Section */
+#upload-data {
+    border: 3px dashed #007bff;
+    background: #f8faff;
+    color: #007bff;
+    border-radius: 15px;
+    padding: 30px;
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#upload-data:hover {
+    background-color: #e3f2fd;
+    border-color: #0056b3;
+    transform: scale(1.02);
+}
+
+/* Buttons */
+button {
+    display: inline-block;
+    background: linear-gradient(90deg, #0056b3, #007bff);
+    color: #fff;
+    padding: 12px 30px;
+    margin: 15px 10px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: linear-gradient(90deg, #004093, #0056b3);
+    transform: translateY(-3px);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Inputs */
+input[type="text"], #predict-input {
+    width: 100%;
+    padding: 15px;
+    margin: 15px 0;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    font-size: 1.1em;
+    background: #f8f9fa;
+    box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus, #predict-input:focus {
+    border-color: #0056b3;
+    background: #ffffff;
+    outline: none;
+}
+
+/* Dropdowns */
+#target-dropdown, #categorical-radio {
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 1em;
+    background-color: #ffffff;
+}
+
+/* Graphs */
+.dash-graph {
+    margin: 25px auto;
+    padding: 25px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Section Containers */
+.container {
+    margin: 30px 0;
+    padding: 25px;
+    background: #fdfdfd;
+    border-radius: 15px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e6e6e6;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: #777;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9em;
+}
