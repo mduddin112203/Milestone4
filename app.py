@@ -3,6 +3,7 @@ from dash import dcc, html, Input, Output, State
 import pandas as pd
 import base64
 import io
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
@@ -183,5 +184,8 @@ def predict_target(n_clicks, input_values):
             return f"Error: {str(e)}"
     return "No prediction made yet."
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+#if __name__ == '__main__':
+ #   app.run_server(debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 8050))  
+    app.run_server(debug=True, port=port, host='0.0.0.0')
