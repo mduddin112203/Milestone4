@@ -3,7 +3,6 @@ from dash import dcc, html, Input, Output, State
 import pandas as pd
 import base64
 import io
-import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
@@ -43,6 +42,7 @@ app.layout = html.Div([
             dcc.Graph(id='barchart1', config={'displayModeBar': False}, style={'height': '400px'}),
         ], style={'display': 'inline-block', 'width': '49%', 'marginRight': '1%', 'verticalAlign': 'top'}),
         html.Div([
+            html.Label("Correlation with Target", style={'fontSize': '14px'}),
             dcc.Graph(id='barchart2', config={'displayModeBar': False}, style={'height': '400px'}),
         ], style={'display': 'inline-block', 'width': '49%', 'verticalAlign': 'top'}),
     ], style={'textAlign': 'center', 'marginBottom': '20px', 'backgroundColor': 'white'}),
@@ -62,16 +62,24 @@ app.layout = html.Div([
     ], style={'textAlign': 'center', 'backgroundColor': 'white'}),
 ])
 
-# Callbacks remain unchanged
+# Callbacks
+
 @app.callback(
     [Output('target-dropdown', 'options'),
      Output('feature-checklist', 'options'),
-     Output('categorical-radio', 'options')],
-    Input('upload-data', 'contents'),
-    State('upload-data', 'filename')
+     Output('categorical-radio', 'options'),
+     Output('target-dropdown', 'value'),
+     Output('feature-checklist', 'value'),
+     Output('categorical-radio', 'value')],
+    Input('upload-data', 'contents')
 )
-def handle_file(contents, filename):
-    global data
+def handle_file(contents):
+    global data, model, X_columns
+    # Reset global variables
+    data = None
+    model = None
+    X_columns = []
+
     if contents:
         try:
             content_type, content_string = contents.split(',')
@@ -82,11 +90,14 @@ def handle_file(contents, filename):
             return (
                 [{'label': col, 'value': col} for col in numerical_columns],
                 [{'label': col, 'value': col} for col in data.columns],
-                [{'label': col, 'value': col} for col in categorical_columns]
+                [{'label': col, 'value': col} for col in categorical_columns],
+                None,  # Reset target dropdown
+                [],    # Reset feature checklist
+                None   # Reset categorical radio
             )
         except Exception:
-            return [], [], []
-    return [], [], []
+            return [], [], [], None, [], None
+    return [], [], [], None, [], None
 
 @app.callback(
     Output('barchart1', 'figure'),
@@ -97,9 +108,16 @@ def update_barchart1(target, selected_categorical):
     if target and selected_categorical and data is not None:
         try:
             grouped_data = data.groupby(selected_categorical)[target].mean().dropna()
+            if grouped_data.empty:
+                return {
+                    'data': [],
+                    'layout': {'title': 'No data available for the selected combination'}
+                }
+
             num_categories = len(grouped_data)
-            bar_width = 0.4 if num_categories > 10 else 0.6
-            return {
+            bar_width = 0.8 if num_categories <= 5 else max(0.3, 1 / num_categories)
+
+            figure = {
                 'data': [{
                     'x': grouped_data.index,
                     'y': grouped_data.values,
@@ -111,11 +129,19 @@ def update_barchart1(target, selected_categorical):
                     'title': f"Average {target} by {selected_categorical}",
                     'xaxis': {'title': selected_categorical, 'tickangle': 45, 'automargin': True},
                     'yaxis': {'title': f"Average {target}"},
+                    'bargap': 0.2,
                 },
             }
+            return figure
         except Exception as e:
-            return {'data': [], 'layout': {'title': f"Error: {str(e)}"}}
-    return {'data': [], 'layout': {'title': 'Select both target and categorical variables'}}
+            return {
+                'data': [],
+                'layout': {'title': f"Error generating graph: {str(e)}"}
+            }
+    return {
+        'data': [],
+        'layout': {'title': 'Select both target and categorical variables'}
+    }
 
 @app.callback(
     Output('barchart2', 'figure'),
@@ -123,17 +149,26 @@ def update_barchart1(target, selected_categorical):
 )
 def update_barchart2(target):
     if target and data is not None:
-        numerical_data = data.select_dtypes(include=['number'])
-        correlations = numerical_data.corr()[target].abs().sort_values(ascending=False).drop(target)
-        return {
-            'data': [{'x': correlations.index, 'y': correlations.values, 'type': 'bar'}],
-            'layout': {
-                'title': f"Correlation Strength with {target}",
-                'xaxis': {'title': "Numerical Variables"},
-                'yaxis': {'title': "Correlation Strength"},
-            },
-        }
-    return {'data': [], 'layout': {'title': 'Select a Target Variable'}}
+        try:
+            numerical_data = data.select_dtypes(include=['number'])
+            correlations = numerical_data.corr()[target].abs().sort_values(ascending=False).drop(target)
+            return {
+                'data': [{'x': correlations.index, 'y': correlations.values, 'type': 'bar'}],
+                'layout': {
+                    'title': f"Correlation Strength with {target}",
+                    'xaxis': {'title': "Numerical Variables"},
+                    'yaxis': {'title': "Correlation Strength"},
+                },
+            }
+        except Exception as e:
+            return {
+                'data': [],
+                'layout': {'title': f"Error generating graph: {str(e)}"}
+            }
+    return {
+        'data': [],
+        'layout': {'title': 'Select a Target Variable'}
+    }
 
 @app.callback(
     Output('train-output', 'children'),
@@ -144,10 +179,15 @@ def update_barchart2(target):
 def train_model(n_clicks, selected_features, target_variable):
     global model, X_columns
     if n_clicks:
+        if not selected_features:
+            return "Please select at least one feature."
+        if not target_variable:
+            return "Please select a target variable."
         try:
             X = data[selected_features]
             y = data[target_variable]
             X_columns = selected_features
+
             preprocessor = ColumnTransformer(
                 transformers=[
                     ('num', SimpleImputer(strategy='mean'), X.select_dtypes(include=['number']).columns),
@@ -158,14 +198,18 @@ def train_model(n_clicks, selected_features, target_variable):
                 ],
                 remainder='passthrough'
             )
+
             pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('model', LinearRegression())])
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             pipeline.fit(X_train, y_train)
             model = pipeline
+
             y_pred = pipeline.predict(X_test)
-            return f"The R² score is: {r2_score(y_test, y_pred):.2f}"
+            r2 = r2_score(y_test, y_pred)
+
+            return f"The R² score is: {r2:.2f}"
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"Error in training: {str(e)}"
     return "Click 'Train' to train the model."
 
 @app.callback(
@@ -181,11 +225,8 @@ def predict_target(n_clicks, input_values):
             prediction = model.predict(input_df)
             return f"Predicted target is: {prediction[0]:.2f}"
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"Error in prediction: {str(e)}"
     return "No prediction made yet."
 
-#if __name__ == '__main__':
- #   app.run_server(debug=True)
-if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8050))  
-    app.run_server(debug=True, port=port, host='0.0.0.0')
+if __name__ == '__main__':
+    app.run_server(debug=True)
